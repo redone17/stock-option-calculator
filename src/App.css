@@ -1,0 +1,248 @@
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #111111;
+  --bg2:      #1a1a1a;
+  --bg3:      #222222;
+  --border:   #333333;
+  --label:    #888888;
+  --text:     #ffffff;
+  --gain:     #00c853;
+  --loss:     #f44336;
+  --input-bg: #1e1e1e;
+  --input-border: #444444;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px 8px 32px;
+}
+
+#root {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ── App wrapper ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  width: 100%;
+  outline: none;
+  cursor: text;
+}
+
+.ticker-input::placeholder { color: var(--label); }
+
+/* ── Table ── */
+.option-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.option-table thead th {
+  background: var(--bg3);
+  color: var(--label);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.option-table thead th:not(:first-child) {
+  text-align: center;
+  border-left: 1px solid var(--border);
+}
+
+.label-col { width: 38%; }
+
+.cell {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.cell.label {
+  color: var(--label);
+  font-size: 12px;
+}
+
+.cell.readonly {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.option-table tbody tr:not(.dark-row):not(.section-gap):not(.pnl-row) td:not(:first-child) {
+  border-left: 1px solid var(--border);
+  text-align: center;
+}
+
+/* ── Dark section rows ── */
+.dark-row {
+  background: #161616;
+}
+.dark-row td:not(:first-child) {
+  border-left: 1px solid var(--border);
+  text-align: center;
+}
+
+/* ── Gap rows ── */
+.section-gap td {
+  padding: 3px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Inputs ── */
+.num-input,
+.date-input,
+.select-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  width: 100%;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.num-input:focus,
+.date-input:focus,
+.select-input:focus {
+  border-color: #666;
+}
+
+.num-input::-webkit-outer-spin-button,
+.num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.select-input {
+  cursor: pointer;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
+/* ── P&L rows ── */
+.pnl-row td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pnl-row .label { color: var(--label); font-weight: 400; }
+.pnl-row .combined-label { font-size: 11px; color: #555; }
+
+.pnl-cell {
+  text-align: center;
+  border-left: 1px solid var(--border);
+}
+
+.pnl-cell.gain { color: var(--gain); }
+.pnl-cell.loss { color: var(--loss); }
+
+.pnl-cell.combined {
+  text-align: center;
+  font-size: 15px;
+}
+
+/* ── Sliders ── */
+.sliders-section {
+  border: 1px solid var(--border);
+  border-top: none;
+  background: var(--bg3);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-label {
+  color: var(--label);
+  font-size: 12px;
+  text-align: right;
+}
+
+.slider-value {
+  color: var(--text);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: #444;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #aaa;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+.slider::-webkit-slider-thumb:hover { background: #ccc; }
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #aaa;
+  cursor: pointer;
+  border: none;
+}
