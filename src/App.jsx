@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Header from './components/Header';
+import TabBar from './components/TabBar';
 import OptionTableRows from './components/OptionTable';
 import PnLRow from './components/PnLRow';
 import Sliders from './components/Sliders';
 import { bsPrice } from './utils/blackScholes';
 import './App.css';
 
-const today = new Date();
-const todayStr = today.toISOString().slice(0, 10);
+const STORAGE_KEY = 'option-calc-v2';
+const todayStr = new Date().toISOString().slice(0, 10);
 
 function addDays(dateStr, n) {
   const d = new Date(dateStr);
@@ -19,9 +20,6 @@ function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86400000);
 }
 
-const defaultExpiry = addDays(todayStr, 30);
-const defaultClose  = addDays(todayStr, 3);
-
 function makeOption(strike, premium, direction, iv, expiryOffset = 30) {
   return {
     type: 'call', direction, premium, strike,
@@ -32,54 +30,105 @@ function makeOption(strike, premium, direction, iv, expiryOffset = 30) {
   };
 }
 
+function newPage(id) {
+  return {
+    id,
+    name: `计算 ${id}`,
+    ticker: 'TSLA',
+    stockPrice: 389.67,
+    closeDate: addDays(todayStr, 3),
+    closePrice: 388.00,
+    options: [
+      makeOption(350, 21.24, 'buy',  50, 30),
+      makeOption(425,  2.23, 'sell', 50, 30),
+    ],
+    sliderStock:   null,
+    sliderDays:    null,
+    sliderIVDelta: 0,
+  };
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && Array.isArray(s.pages) && s.pages.length > 0) return s;
+  } catch {}
+  return null;
+}
+
 export default function App() {
-  const [ticker, setTicker]         = useState('TSLA');
-  const [stockPrice, setStockPrice] = useState(389.67);
-  const [closeDate, setCloseDate]   = useState(defaultClose);
-  const [closePrice, setClosePrice] = useState(388.00);
-  const [options, setOptions]       = useState([
-    makeOption(350, 21.24, 'buy',  50, 30),
-    makeOption(425,  2.23, 'sell', 50, 30),
-  ]);
+  const [appState, setAppState] = useState(() => {
+    return loadState() ?? { pages: [newPage(1)], activeId: 1, nextId: 2 };
+  });
+  const [savedAt, setSavedAt] = useState(null);
+  const saveTimer = useRef(null);
 
-  // Slider state
-  // sliderStock: what-if price at close (null = use closePrice)
-  // sliderDays:  what-if remaining days for leg 0 (null = use actual); leg 1 preserves spread
-  // sliderIVDelta: ±pp added to each leg's IV (0 = no change)
-  const [sliderStock,    setSliderStock]    = useState(null);
-  const [sliderDays,     setSliderDays]     = useState(null);
-  const [sliderIVDelta,  setSliderIVDelta]  = useState(0);
+  const { pages, activeId, nextId } = appState;
+  const page = pages.find(p => p.id === activeId) ?? pages[0];
 
-  function updateOption(idx, updated) {
-    setOptions(prev => prev.map((o, i) => i === idx ? updated : o));
+  // Auto-save: debounced 800 ms after last change, then flash "已保存"
+  useEffect(() => {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      setSavedAt(Date.now());
+    }, 800);
+    return () => clearTimeout(saveTimer.current);
+  }, [appState]);
+
+  // ── State helpers ────────────────────────────────────────────
+  function updatePage(changes) {
+    setAppState(prev => ({
+      ...prev,
+      pages: prev.pages.map(p => p.id === prev.activeId ? { ...p, ...changes } : p),
+    }));
   }
 
-  // Per-leg derived values
-  const daysHeld = Math.max(0, daysBetween(options[0].buyDate, todayStr));
+  function updateOption(idx, updated) {
+    updatePage({ options: page.options.map((o, i) => i === idx ? updated : o) });
+  }
 
-  // Each leg has its own expiry → per-leg arrays
-  const daysToExpiry  = options.map(opt => Math.max(0, daysBetween(todayStr, opt.expiry)));
-  const remainingDays = options.map(opt => Math.max(0, daysBetween(closeDate, opt.expiry)));
+  function addPage() {
+    setAppState(prev => {
+      const id = prev.nextId;
+      return { ...prev, pages: [...prev.pages, newPage(id)], activeId: id, nextId: id + 1 };
+    });
+  }
 
-  // Effective values used in B-S calculation
-  // Stock: slider overrides closePrice
-  const effStock = sliderStock ?? closePrice;
+  function deletePage(id) {
+    setAppState(prev => {
+      const remaining = prev.pages.filter(p => p.id !== id);
+      const newActive = prev.activeId === id ? remaining[remaining.length - 1].id : prev.activeId;
+      return { ...prev, pages: remaining, activeId: newActive };
+    });
+  }
 
-  // Days: slider sets leg 0's remaining days; leg 1 preserves the calendar spread gap
-  const effDays = options.map((_, i) => {
+  function renamePage(id, name) {
+    setAppState(prev => ({
+      ...prev,
+      pages: prev.pages.map(p => p.id === id ? { ...p, name } : p),
+    }));
+  }
+
+  function selectPage(id) {
+    setAppState(prev => ({ ...prev, activeId: id }));
+  }
+
+  // ── Derived values ───────────────────────────────────────────
+  const daysHeld      = Math.max(0, daysBetween(page.options[0].buyDate, todayStr));
+  const daysToExpiry  = page.options.map(opt => Math.max(0, daysBetween(todayStr, opt.expiry)));
+  const remainingDays = page.options.map(opt => Math.max(0, daysBetween(page.closeDate, opt.expiry)));
+
+  const effStock = page.sliderStock ?? page.closePrice;
+  const effDays  = page.options.map((_, i) => {
     const base0 = remainingDays[0];
-    const baseI = remainingDays[i];
-    const days0 = sliderDays ?? base0;
-    // Preserve the spread between legs (important for calendar spreads)
-    return Math.max(0, days0 + (baseI - base0));
+    const days0 = page.sliderDays ?? base0;
+    return Math.max(0, days0 + (remainingDays[i] - base0));
   });
-
-  // IV: add delta to each leg's own IV independently (preserves leg-by-leg difference)
-  const effIV = options.map(opt => Math.max(0.5, opt.iv + sliderIVDelta) / 100);
+  const effIV = page.options.map(opt => Math.max(0.5, opt.iv + page.sliderIVDelta) / 100);
 
   const results = useMemo(() => {
-    return options.map((opt, i) => {
-      // Closed leg: P&L locked at closedPrice
+    return page.options.map((opt, i) => {
       if (opt.isClosed) {
         const cost  = opt.premium * 100 * opt.contracts;
         const value = opt.closedPrice * 100 * opt.contracts;
@@ -93,11 +142,21 @@ export default function App() {
       const pnl      = opt.direction === 'buy' ? value - cost : cost - value;
       return { pnl, pnlPct: cost > 0 ? (pnl / cost) * 100 : 0, isClosed: false };
     });
-  }, [options, effStock, effDays, effIV]);
+  }, [page.options, effStock, effDays, effIV]);
 
   return (
     <div className="app">
-      <Header ticker={ticker} onTickerChange={setTicker} />
+      <TabBar
+        pages={pages}
+        activeId={activeId}
+        savedAt={savedAt}
+        onSelect={selectPage}
+        onAdd={addPage}
+        onDelete={deletePage}
+        onRename={renamePage}
+      />
+
+      <Header ticker={page.ticker} onTickerChange={v => updatePage({ ticker: v })} />
 
       <table className="option-table">
         <thead>
@@ -109,17 +168,17 @@ export default function App() {
         </thead>
         <tbody>
           <OptionTableRows
-            options={options}
+            options={page.options}
             onOptionChange={updateOption}
-            stockPrice={stockPrice}
-            onStockPriceChange={setStockPrice}
+            stockPrice={page.stockPrice}
+            onStockPriceChange={v => updatePage({ stockPrice: v })}
             daysToExpiry={daysToExpiry}
             remainingDays={remainingDays}
-            closeDate={closeDate}
-            onCloseDateChange={setCloseDate}
+            closeDate={page.closeDate}
+            onCloseDateChange={v => updatePage({ closeDate: v })}
             daysHeld={daysHeld}
-            closePrice={closePrice}
-            onClosePriceChange={setClosePrice}
+            closePrice={page.closePrice}
+            onClosePriceChange={v => updatePage({ closePrice: v })}
           />
           <tr className="section-gap"><td colSpan={3}></td></tr>
           <PnLRow results={results} />
@@ -127,16 +186,16 @@ export default function App() {
       </table>
 
       <Sliders
-        closePrice={closePrice}
-        stockPrice={stockPrice}
-        sliderStock={sliderStock}
-        onSliderStock={setSliderStock}
+        closePrice={page.closePrice}
+        stockPrice={page.stockPrice}
+        sliderStock={page.sliderStock}
+        onSliderStock={v => updatePage({ sliderStock: v })}
         remainingDays0={remainingDays[0]}
         maxDays={Math.max(daysToExpiry[0], daysToExpiry[1], 1)}
-        sliderDays={sliderDays}
-        onSliderDays={setSliderDays}
-        sliderIVDelta={sliderIVDelta}
-        onSliderIVDelta={setSliderIVDelta}
+        sliderDays={page.sliderDays}
+        onSliderDays={v => updatePage({ sliderDays: v })}
+        sliderIVDelta={page.sliderIVDelta}
+        onSliderIVDelta={v => updatePage({ sliderIVDelta: v })}
       />
     </div>
   );

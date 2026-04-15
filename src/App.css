@@ -37,10 +37,103 @@ body {
   gap: 0;
 }
 
+/* ── Tab bar ── */
+.tab-bar-wrapper {
+  display: flex;
+  align-items: center;
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  gap: 8px;
+  padding-right: 10px;
+  overflow: hidden;
+}
+
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 8px;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
+  min-width: 80px;
+  max-width: 160px;
+  transition: background 0.1s;
+}
+.tab:hover { background: #1a1a1a; }
+.tab.active { background: var(--bg2); }
+
+.tab-name {
+  background: transparent;
+  border: none;
+  color: var(--label);
+  font-size: 12px;
+  padding: 7px 0;
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab.active .tab-name { color: var(--text); cursor: text; }
+.tab-name:focus { color: var(--text); }
+
+.tab-close {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 2px;
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: color 0.1s, background 0.1s;
+}
+.tab-close:hover { color: var(--text); background: #333; }
+
+.tab-add {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: color 0.1s;
+}
+.tab-add:hover { color: var(--text); }
+
+.saved-indicator {
+  font-size: 11px;
+  color: var(--gain);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+.saved-indicator.show { opacity: 1; }
+
 /* ── Header ── */
 .header {
   background: var(--bg3);
   border: 1px solid var(--border);
+  border-top: none;
   border-bottom: none;
   padding: 8px 12px;
   display: flex;
