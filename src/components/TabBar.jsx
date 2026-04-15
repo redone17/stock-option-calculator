@@ -13,16 +13,16 @@ function SavedDot({ savedAt }) {
   }, [savedAt]);
 
   return (
-    <span className={`saved-indicator ${visible ? 'show' : ''}`}>
+    <div className={`saved-indicator ${visible ? 'show' : ''}`}>
       已保存 ✓
-    </span>
+    </div>
   );
 }
 
 export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDelete, onRename }) {
   return (
-    <div className="tab-bar-wrapper">
-      <div className="tab-bar">
+    <div className="tab-sidebar">
+      <div className="tab-list">
         {pages.map(p => (
           <div
             key={p.id}
@@ -33,8 +33,8 @@ export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDe
               className="tab-name"
               value={p.name}
               onChange={e => onRename(p.id, e.target.value)}
-              onClick={e => e.stopPropagation()}
-              onFocus={e => e.target.select()}
+              // No stopPropagation — click on name also selects the tab
+              onFocus={e => { onSelect(p.id); e.target.select(); }}
               maxLength={20}
             />
             {pages.length > 1 && (
@@ -48,8 +48,12 @@ export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDe
             )}
           </div>
         ))}
-        <button className="tab-add" onClick={onAdd} title="新建计算页">+</button>
       </div>
+
+      <button className="tab-add" onClick={onAdd} title="新建计算页">
+        + 新建
+      </button>
+
       <SavedDot savedAt={savedAt} />
     </div>
   );

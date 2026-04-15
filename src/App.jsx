@@ -156,6 +156,7 @@ export default function App() {
         onRename={renamePage}
       />
 
+      <div className="content">
       <Header ticker={page.ticker} onTickerChange={v => updatePage({ ticker: v })} />
 
       <table className="option-table">
@@ -197,6 +198,7 @@ export default function App() {
         sliderIVDelta={page.sliderIVDelta}
         onSliderIVDelta={v => updatePage({ sliderIVDelta: v })}
       />
+      </div>
     </div>
   );
 }
