@@ -11,47 +11,58 @@ function Slider({ label, value, min, max, step, onChange, display }) {
         value={value}
         onChange={e => onChange(parseFloat(e.target.value))}
       />
-      <span className="slider-value">{display ?? value}</span>
+      <span className="slider-value">{display}</span>
     </div>
   );
 }
 
 export default function Sliders({
-  stockPrice, sliderStock, onSliderStock,
-  daysToExpiry, sliderDays, onSliderDays,
-  avgIV, sliderIV, onSliderIV,
+  closePrice, stockPrice,
+  sliderStock, onSliderStock,
+  remainingDays0, maxDays,
+  sliderDays, onSliderDays,
+  sliderIVDelta, onSliderIVDelta,
 }) {
   const stockMin = Math.max(1, Math.round(stockPrice * 0.5));
   const stockMax = Math.round(stockPrice * 1.5);
 
+  // Stock slider: position tracks closePrice when null
+  const stockVal = sliderStock ?? closePrice;
+
+  // Days slider: position tracks leg 0 remaining days when null
+  const daysVal = sliderDays ?? remainingDays0;
+
   return (
     <div className="sliders-section">
+      {/* Stock: what-if close price; range centered on current stockPrice */}
       <Slider
         label="股价"
-        value={sliderStock ?? stockPrice}
+        value={stockVal}
         min={stockMin}
         max={stockMax}
         step={0.5}
         onChange={onSliderStock}
-        display={`$${(sliderStock ?? stockPrice).toFixed(2)}`}
+        display={`$${stockVal.toFixed(2)}`}
       />
+      {/* Days: remaining days for leg 0; leg 1 preserves calendar spread gap */}
       <Slider
         label="天数"
-        value={sliderDays ?? daysToExpiry}
+        value={daysVal}
         min={0}
-        max={Math.max(1, daysToExpiry)}
+        max={maxDays}
         step={1}
         onChange={onSliderDays}
-        display={`${sliderDays ?? daysToExpiry} 天`}
+        display={`${daysVal} 天`}
       />
+      {/* IV delta: +/- pp applied equally to both legs' IV (preserves per-leg difference) */}
       <Slider
-        label="IV"
-        value={sliderIV ?? avgIV}
-        min={5}
-        max={150}
+        label="IV 变动"
+        value={sliderIVDelta}
+        min={-30}
+        max={30}
         step={0.5}
-        onChange={onSliderIV}
-        display={`${(sliderIV ?? avgIV).toFixed(1)}%`}
+        onChange={onSliderIVDelta}
+        display={sliderIVDelta === 0 ? '±0%' : `${sliderIVDelta > 0 ? '+' : ''}${sliderIVDelta.toFixed(1)}%`}
       />
     </div>
   );

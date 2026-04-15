@@ -39,7 +39,6 @@ const dirOpts = [
   { value: 'sell', label: '卖出 (Sell)' },
 ];
 
-// Returns <tr> row fragments — must be rendered inside a <tbody>
 export default function OptionTableRows({
   options, onOptionChange,
   stockPrice, onStockPriceChange,
@@ -80,6 +79,7 @@ export default function OptionTableRows({
         <td className="cell"><DateInput value={options[0].buyDate} onChange={v => upd(0,'buyDate',v)} /></td>
         <td className="cell"><DateInput value={options[1].buyDate} onChange={v => upd(1,'buyDate',v)} /></td>
       </tr>
+      {/* Each leg has its own expiry — critical for calendar spreads */}
       <tr>
         <td className="cell label">到期日</td>
         <td className="cell"><DateInput value={options[0].expiry} onChange={v => upd(0,'expiry',v)} /></td>
@@ -99,13 +99,16 @@ export default function OptionTableRows({
           <NumInput value={stockPrice} onChange={onStockPriceChange} step="0.01" />
         </td>
       </tr>
+      {/* Per-leg DTE: shown separately since calendar spreads have different expiries */}
       <tr className="dark-row">
         <td className="cell label">天数 (到期)</td>
-        <td className="cell readonly" colSpan={2}>{daysToExpiry}</td>
+        <td className="cell readonly">{daysToExpiry[0]}</td>
+        <td className="cell readonly">{daysToExpiry[1]}</td>
       </tr>
       <tr className="dark-row">
         <td className="cell label">剩余天数</td>
-        <td className="cell readonly" colSpan={2}>{remainingDays}</td>
+        <td className="cell readonly">{remainingDays[0]}</td>
+        <td className="cell readonly">{remainingDays[1]}</td>
       </tr>
       <tr className="dark-row">
         <td className="cell label">预计平仓日期</td>
@@ -129,6 +132,38 @@ export default function OptionTableRows({
         <td className="cell"><NumInput value={options[0].iv} onChange={v => upd(0,'iv',v)} step="0.5" /></td>
         <td className="cell"><NumInput value={options[1].iv} onChange={v => upd(1,'iv',v)} step="0.5" /></td>
       </tr>
+
+      {/* ── 拆腿 / Leg close ── */}
+      <tr className="section-gap"><td colSpan={3}></td></tr>
+      <tr>
+        <td className="cell label">已平仓</td>
+        <td className="cell center">
+          <input type="checkbox" className="checkbox"
+            checked={options[0].isClosed}
+            onChange={e => upd(0, 'isClosed', e.target.checked)} />
+        </td>
+        <td className="cell center">
+          <input type="checkbox" className="checkbox"
+            checked={options[1].isClosed}
+            onChange={e => upd(1, 'isClosed', e.target.checked)} />
+        </td>
+      </tr>
+      {/* Show close price row only when at least one leg is closed */}
+      {(options[0].isClosed || options[1].isClosed) && (
+        <tr>
+          <td className="cell label">平仓价格</td>
+          <td className="cell">
+            {options[0].isClosed
+              ? <NumInput value={options[0].closedPrice} onChange={v => upd(0,'closedPrice',v)} />
+              : <span className="cell readonly">—</span>}
+          </td>
+          <td className="cell">
+            {options[1].isClosed
+              ? <NumInput value={options[1].closedPrice} onChange={v => upd(1,'closedPrice',v)} />
+              : <span className="cell readonly">—</span>}
+          </td>
+        </tr>
+      )}
     </>
   );
 }

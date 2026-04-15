@@ -7,23 +7,25 @@ function fmtPct(n) {
   return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
 }
 
-function PnLCell({ value, isPercent }) {
+function PnLCell({ value, isPercent, isClosed }) {
   const cls = value >= 0 ? 'gain' : 'loss';
   return (
-    <td className={`cell pnl-cell ${cls}`}>
+    <td className={`cell pnl-cell ${cls}${isClosed ? ' is-closed' : ''}`}>
       {isPercent ? fmtPct(value) : `$ ${fmt(value)}`}
+      {isClosed && <span className="closed-tag">已平</span>}
     </td>
   );
 }
 
-export default function PnLRow({ pnl1, pnl2, pnlPct1, pnlPct2 }) {
-  const combined = pnl1 + pnl2;
+export default function PnLRow({ results }) {
+  const [r1, r2] = results;
+  const combined = r1.pnl + r2.pnl;
   return (
     <>
       <tr className="pnl-row">
         <td className="cell label">盈亏</td>
-        <PnLCell value={pnl1} />
-        <PnLCell value={pnl2} />
+        <PnLCell value={r1.pnl} isClosed={r1.isClosed} />
+        <PnLCell value={r2.pnl} isClosed={r2.isClosed} />
       </tr>
       <tr className="pnl-row">
         <td className="cell label combined-label">合计</td>
@@ -33,8 +35,8 @@ export default function PnLRow({ pnl1, pnl2, pnlPct1, pnlPct2 }) {
       </tr>
       <tr className="pnl-row">
         <td className="cell label">盈亏%</td>
-        <PnLCell value={pnlPct1} isPercent />
-        <PnLCell value={pnlPct2} isPercent />
+        <PnLCell value={r1.pnlPct} isPercent isClosed={r1.isClosed} />
+        <PnLCell value={r2.pnlPct} isPercent isClosed={r2.isClosed} />
       </tr>
     </>
   );

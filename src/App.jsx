@@ -22,54 +22,78 @@ function daysBetween(a, b) {
 const defaultExpiry = addDays(todayStr, 30);
 const defaultClose  = addDays(todayStr, 3);
 
-function makeOption(strike, premium, direction, iv) {
-  return { type: 'call', direction, premium, strike, buyDate: todayStr, expiry: defaultExpiry, contracts: 1, iv };
+function makeOption(strike, premium, direction, iv, expiryOffset = 30) {
+  return {
+    type: 'call', direction, premium, strike,
+    buyDate: todayStr,
+    expiry: addDays(todayStr, expiryOffset),
+    contracts: 1, iv,
+    isClosed: false, closedPrice: 0,
+  };
 }
 
 export default function App() {
-  const [ticker, setTicker]           = useState('TSLA');
-  const [stockPrice, setStockPrice]   = useState(389.67);
-  const [closeDate, setCloseDate]     = useState(defaultClose);
-  const [closePrice, setClosePrice]   = useState(388.00);
-  const [options, setOptions]         = useState([
-    makeOption(350, 21.24, 'buy',  50),
-    makeOption(425,  2.23, 'sell', 50),
+  const [ticker, setTicker]         = useState('TSLA');
+  const [stockPrice, setStockPrice] = useState(389.67);
+  const [closeDate, setCloseDate]   = useState(defaultClose);
+  const [closePrice, setClosePrice] = useState(388.00);
+  const [options, setOptions]       = useState([
+    makeOption(350, 21.24, 'buy',  50, 30),
+    makeOption(425,  2.23, 'sell', 50, 30),
   ]);
-  const [sliderStock, setSliderStock] = useState(null);
-  const [sliderDays,  setSliderDays]  = useState(null);
-  const [sliderIV,    setSliderIV]    = useState(null);
+
+  // Slider state
+  // sliderStock: what-if price at close (null = use closePrice)
+  // sliderDays:  what-if remaining days for leg 0 (null = use actual); leg 1 preserves spread
+  // sliderIVDelta: ±pp added to each leg's IV (0 = no change)
+  const [sliderStock,    setSliderStock]    = useState(null);
+  const [sliderDays,     setSliderDays]     = useState(null);
+  const [sliderIVDelta,  setSliderIVDelta]  = useState(0);
 
   function updateOption(idx, updated) {
     setOptions(prev => prev.map((o, i) => i === idx ? updated : o));
-    setSliderStock(null); setSliderDays(null); setSliderIV(null);
   }
 
-  // Derived
-  const refExpiry    = options[0].expiry;
-  const daysToExpiry = Math.max(0, daysBetween(todayStr, refExpiry));
-  const remainingDays = Math.max(0, daysBetween(closeDate, refExpiry));
-  const daysHeld     = Math.max(0, daysBetween(options[0].buyDate, todayStr));
-  const avgIV        = (options[0].iv + options[1].iv) / 2;
+  // Per-leg derived values
+  const daysHeld = Math.max(0, daysBetween(options[0].buyDate, todayStr));
 
-  // Effective values for B-S (sliders override)
+  // Each leg has its own expiry → per-leg arrays
+  const daysToExpiry  = options.map(opt => Math.max(0, daysBetween(todayStr, opt.expiry)));
+  const remainingDays = options.map(opt => Math.max(0, daysBetween(closeDate, opt.expiry)));
+
+  // Effective values used in B-S calculation
+  // Stock: slider overrides closePrice
   const effStock = sliderStock ?? closePrice;
-  const effDays  = sliderDays  ?? remainingDays;
-  const effIV0   = (sliderIV   ?? options[0].iv) / 100;
-  const effIV1   = (sliderIV   ?? options[1].iv) / 100;
 
-  const { pnl1, pnlPct1, pnl2, pnlPct2 } = useMemo(() => {
-    function calc(opt, effIV) {
-      const T        = effDays / 365;
-      const curPrice = bsPrice(effStock, opt.strike, T, 0.045, effIV, opt.type);
+  // Days: slider sets leg 0's remaining days; leg 1 preserves the calendar spread gap
+  const effDays = options.map((_, i) => {
+    const base0 = remainingDays[0];
+    const baseI = remainingDays[i];
+    const days0 = sliderDays ?? base0;
+    // Preserve the spread between legs (important for calendar spreads)
+    return Math.max(0, days0 + (baseI - base0));
+  });
+
+  // IV: add delta to each leg's own IV independently (preserves leg-by-leg difference)
+  const effIV = options.map(opt => Math.max(0.5, opt.iv + sliderIVDelta) / 100);
+
+  const results = useMemo(() => {
+    return options.map((opt, i) => {
+      // Closed leg: P&L locked at closedPrice
+      if (opt.isClosed) {
+        const cost  = opt.premium * 100 * opt.contracts;
+        const value = opt.closedPrice * 100 * opt.contracts;
+        const pnl   = opt.direction === 'buy' ? value - cost : cost - value;
+        return { pnl, pnlPct: cost > 0 ? (pnl / cost) * 100 : 0, isClosed: true };
+      }
+      const T        = effDays[i] / 365;
+      const curPrice = bsPrice(effStock, opt.strike, T, 0.045, effIV[i], opt.type);
       const cost     = opt.premium * 100 * opt.contracts;
       const value    = curPrice * 100 * opt.contracts;
       const pnl      = opt.direction === 'buy' ? value - cost : cost - value;
-      return { pnl, pnlPct: cost > 0 ? (pnl / cost) * 100 : 0 };
-    }
-    const r1 = calc(options[0], effIV0);
-    const r2 = calc(options[1], effIV1);
-    return { pnl1: r1.pnl, pnlPct1: r1.pnlPct, pnl2: r2.pnl, pnlPct2: r2.pnlPct };
-  }, [options, effStock, effDays, effIV0, effIV1]);
+      return { pnl, pnlPct: cost > 0 ? (pnl / cost) * 100 : 0, isClosed: false };
+    });
+  }, [options, effStock, effDays, effIV]);
 
   return (
     <div className="app">
@@ -88,7 +112,7 @@ export default function App() {
             options={options}
             onOptionChange={updateOption}
             stockPrice={stockPrice}
-            onStockPriceChange={v => { setStockPrice(v); setSliderStock(null); }}
+            onStockPriceChange={setStockPrice}
             daysToExpiry={daysToExpiry}
             remainingDays={remainingDays}
             closeDate={closeDate}
@@ -98,20 +122,21 @@ export default function App() {
             onClosePriceChange={setClosePrice}
           />
           <tr className="section-gap"><td colSpan={3}></td></tr>
-          <PnLRow pnl1={pnl1} pnl2={pnl2} pnlPct1={pnlPct1} pnlPct2={pnlPct2} />
+          <PnLRow results={results} />
         </tbody>
       </table>
 
       <Sliders
+        closePrice={closePrice}
         stockPrice={stockPrice}
         sliderStock={sliderStock}
         onSliderStock={setSliderStock}
-        daysToExpiry={daysToExpiry}
+        remainingDays0={remainingDays[0]}
+        maxDays={Math.max(daysToExpiry[0], daysToExpiry[1], 1)}
         sliderDays={sliderDays}
         onSliderDays={setSliderDays}
-        avgIV={avgIV}
-        sliderIV={sliderIV}
-        onSliderIV={setSliderIV}
+        sliderIVDelta={sliderIVDelta}
+        onSliderIVDelta={setSliderIVDelta}
       />
     </div>
   );
