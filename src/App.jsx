@@ -42,8 +42,7 @@ function newPage(id) {
     closeDate: addDays(todayStr, 3),
     closePrice: 388.00,
     options: [
-      makeOption(350, 21.24, 'buy',  50, 30),
-      makeOption(425,  2.23, 'sell', 50, 30),
+      makeOption(350, 21.24, 'buy', 50, 30),
     ],
     sliderStock:   null,
     sliderDays:    null,
@@ -66,7 +65,7 @@ export default function App() {
   });
   const [savedAt, setSavedAt] = useState(null);
   const saveTimer = useRef(null);
-  const [marketData, setMarketData] = useState({ loading: false, error: null, hv: null, greeks: [null, null], lastFetched: null });
+  const [marketData, setMarketData] = useState({ loading: false, error: null, hv: null, greeks: [], lastFetched: null });
 
   const { pages, activeId, nextId } = appState;
   const page = pages.find(p => p.id === activeId) ?? pages[0];
@@ -93,6 +92,17 @@ export default function App() {
     updatePage({ options: page.options.map((o, i) => i === idx ? updated : o) });
   }
 
+  function addOption() {
+    updatePage({ options: [...page.options, makeOption(page.stockPrice || 100, 0, 'buy', 50, 30)] });
+    setMarketData({ loading: false, error: null, hv: null, greeks: [], lastFetched: null });
+  }
+
+  function removeOption(idx) {
+    if (page.options.length <= 1) return;
+    updatePage({ options: page.options.filter((_, i) => i !== idx) });
+    setMarketData({ loading: false, error: null, hv: null, greeks: [], lastFetched: null });
+  }
+
   function addPage() {
     setAppState(prev => {
       const id = prev.nextId;
@@ -117,7 +127,7 @@ export default function App() {
 
   function selectPage(id) {
     setAppState(prev => ({ ...prev, activeId: id }));
-    setMarketData({ loading: false, error: null, hv: null, greeks: [null, null], lastFetched: null });
+    setMarketData({ loading: false, error: null, hv: null, greeks: [], lastFetched: null });
   }
 
   async function handleFetchMarketData() {
@@ -133,7 +143,7 @@ export default function App() {
       if (Object.keys(changes).length > 0) updatePage(changes);
       setMarketData({ loading: false, error: null, hv: result.hv, greeks: result.legs, lastFetched: Date.now() });
     } catch (err) {
-      setMarketData({ loading: false, error: err.message, hv: null, greeks: [null, null] });
+      setMarketData({ loading: false, error: err.message, hv: null, greeks: [] });
     }
   }
 
@@ -194,14 +204,21 @@ export default function App() {
         <thead>
           <tr>
             <th className="label-col">参数</th>
-            <th>期权 1</th>
-            <th>期权 2</th>
+            {page.options.map((_, i) => (
+              <th key={i}>
+                期权 {i + 1}
+                {page.options.length > 1 && (
+                  <button className="col-remove-btn" onClick={() => removeOption(i)} title="删除此期权">×</button>
+                )}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           <OptionTableRows
             options={page.options}
             onOptionChange={updateOption}
+            onAddOption={addOption}
             stockPrice={page.stockPrice}
             onStockPriceChange={v => updatePage({ stockPrice: v })}
             daysToExpiry={daysToExpiry}
@@ -225,7 +242,7 @@ export default function App() {
         sliderStock={page.sliderStock}
         onSliderStock={v => updatePage({ sliderStock: v })}
         remainingDays0={remainingDays[0]}
-        maxDays={Math.max(daysToExpiry[0], daysToExpiry[1], 1)}
+        maxDays={Math.max(...daysToExpiry, 1)}
         sliderDays={page.sliderDays}
         onSliderDays={v => updatePage({ sliderDays: v })}
         sliderIVDelta={page.sliderIVDelta}

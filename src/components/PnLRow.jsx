@@ -18,25 +18,29 @@ function PnLCell({ value, isPercent, isClosed }) {
 }
 
 export default function PnLRow({ results }) {
-  const [r1, r2] = results;
-  const combined = r1.pnl + r2.pnl;
+  const combined = results.reduce((sum, r) => sum + r.pnl, 0);
+  const n = results.length;
   return (
     <>
       <tr className="pnl-row">
         <td className="cell label">盈亏</td>
-        <PnLCell value={r1.pnl} isClosed={r1.isClosed} />
-        <PnLCell value={r2.pnl} isClosed={r2.isClosed} />
+        {results.map((r, i) => (
+          <PnLCell key={i} value={r.pnl} isClosed={r.isClosed} />
+        ))}
       </tr>
-      <tr className="pnl-row">
-        <td className="cell label combined-label">合计</td>
-        <td className={`cell pnl-cell combined ${combined >= 0 ? 'gain' : 'loss'}`} colSpan={2}>
-          $ {fmt(combined)}
-        </td>
-      </tr>
+      {n > 1 && (
+        <tr className="pnl-row">
+          <td className="cell label combined-label">合计</td>
+          <td className={`cell pnl-cell combined ${combined >= 0 ? 'gain' : 'loss'}`} colSpan={n}>
+            $ {fmt(combined)}
+          </td>
+        </tr>
+      )}
       <tr className="pnl-row">
         <td className="cell label">盈亏%</td>
-        <PnLCell value={r1.pnlPct} isPercent isClosed={r1.isClosed} />
-        <PnLCell value={r2.pnlPct} isPercent isClosed={r2.isClosed} />
+        {results.map((r, i) => (
+          <PnLCell key={i} value={r.pnlPct} isPercent isClosed={r.isClosed} />
+        ))}
       </tr>
     </>
   );

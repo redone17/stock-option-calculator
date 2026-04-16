@@ -405,6 +405,41 @@ body {
   vertical-align: middle;
 }
 
+/* ── Column remove button (in thead) ── */
+.col-remove-btn {
+  background: none;
+  border: none;
+  color: transparent;
+  font-size: 12px;
+  line-height: 1;
+  padding: 1px 3px;
+  margin-left: 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 0.1s, background 0.1s;
+  vertical-align: middle;
+}
+.option-table thead th:hover .col-remove-btn { color: #555; }
+.col-remove-btn:hover { color: var(--text) !important; background: #333; }
+
+/* ── Add option button ── */
+.add-option-cell {
+  text-align: center;
+  padding: 6px !important;
+}
+.add-option-btn {
+  background: none;
+  border: 1px dashed #333;
+  color: #555;
+  font-size: 12px;
+  padding: 4px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: color 0.15s, border-color 0.15s;
+}
+.add-option-btn:hover { color: var(--text); border-color: #666; }
+
 /* Checkbox */
 .cell.center { text-align: center; }
 .checkbox {
