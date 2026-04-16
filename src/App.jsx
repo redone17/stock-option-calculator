@@ -5,6 +5,7 @@ import OptionTableRows from './components/OptionTable';
 import PnLRow from './components/PnLRow';
 import Sliders from './components/Sliders';
 import { bsPrice } from './utils/blackScholes';
+import { fetchAllMarketData } from './utils/alpacaApi';
 import './App.css';
 
 const STORAGE_KEY = 'option-calc-v2';
@@ -62,6 +63,7 @@ export default function App() {
   });
   const [savedAt, setSavedAt] = useState(null);
   const saveTimer = useRef(null);
+  const [marketData, setMarketData] = useState({ loading: false, error: null, hv: null, greeks: [null, null], lastFetched: null });
 
   const { pages, activeId, nextId } = appState;
   const page = pages.find(p => p.id === activeId) ?? pages[0];
@@ -112,6 +114,24 @@ export default function App() {
 
   function selectPage(id) {
     setAppState(prev => ({ ...prev, activeId: id }));
+    setMarketData({ loading: false, error: null, hv: null, greeks: [null, null], lastFetched: null });
+  }
+
+  async function handleFetchMarketData() {
+    setMarketData(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const result = await fetchAllMarketData(page.ticker, page.options);
+      const changes = {};
+      if (result.stockPrice != null) changes.stockPrice = result.stockPrice;
+      const updatedOptions = page.options.map((opt, i) =>
+        result.legs[i]?.iv != null ? { ...opt, iv: parseFloat(result.legs[i].iv.toFixed(1)) } : opt
+      );
+      if (updatedOptions.some((o, i) => o.iv !== page.options[i].iv)) changes.options = updatedOptions;
+      if (Object.keys(changes).length > 0) updatePage(changes);
+      setMarketData({ loading: false, error: null, hv: result.hv, greeks: result.legs, lastFetched: Date.now() });
+    } catch (err) {
+      setMarketData({ loading: false, error: err.message, hv: null, greeks: [null, null] });
+    }
   }
 
   // ── Derived values ───────────────────────────────────────────
@@ -153,11 +173,17 @@ export default function App() {
         onSelect={selectPage}
         onAdd={addPage}
         onDelete={deletePage}
-        onRename={renamePage}
       />
 
       <div className="content">
-      <Header ticker={page.ticker} onTickerChange={v => updatePage({ ticker: v })} />
+      <Header
+        ticker={page.ticker}
+        onTickerChange={v => updatePage({ ticker: v })}
+        onFetch={handleFetchMarketData}
+        fetchLoading={marketData.loading}
+        fetchError={marketData.error}
+        lastFetched={marketData.lastFetched}
+      />
 
       <table className="option-table">
         <thead>
@@ -180,6 +206,8 @@ export default function App() {
             daysHeld={daysHeld}
             closePrice={page.closePrice}
             onClosePriceChange={v => updatePage({ closePrice: v })}
+            greeks={marketData.greeks}
+            hv={marketData.hv}
           />
           <tr className="section-gap"><td colSpan={3}></td></tr>
           <PnLRow results={results} />

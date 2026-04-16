@@ -19,7 +19,7 @@ function SavedDot({ savedAt }) {
   );
 }
 
-export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDelete, onRename }) {
+export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDelete }) {
   return (
     <div className="tab-sidebar">
       <div className="tab-list">
@@ -29,14 +29,7 @@ export default function TabBar({ pages, activeId, savedAt, onSelect, onAdd, onDe
             className={`tab ${p.id === activeId ? 'active' : ''}`}
             onClick={() => onSelect(p.id)}
           >
-            <input
-              className="tab-name"
-              value={p.name}
-              onChange={e => onRename(p.id, e.target.value)}
-              // No stopPropagation — click on name also selects the tab
-              onFocus={e => { onSelect(p.id); e.target.select(); }}
-              maxLength={20}
-            />
+            <span className="tab-name">{p.ticker || '—'}</span>
             {pages.length > 1 && (
               <button
                 className="tab-close"

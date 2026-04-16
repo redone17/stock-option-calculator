@@ -46,6 +46,7 @@ export default function OptionTableRows({
   closeDate, onCloseDateChange,
   daysHeld,
   closePrice, onClosePriceChange,
+  greeks, hv,
 }) {
   function upd(idx, field, val) {
     onOptionChange(idx, { ...options[idx], [field]: val });
@@ -99,6 +100,12 @@ export default function OptionTableRows({
           <NumInput value={stockPrice} onChange={onStockPriceChange} step="0.01" />
         </td>
       </tr>
+      {hv != null && (
+        <tr className="dark-row">
+          <td className="cell label">历史波动率 HV30</td>
+          <td className="cell readonly" colSpan={2}>{hv.toFixed(1)}%</td>
+        </tr>
+      )}
       {/* Per-leg DTE: shown separately since calendar spreads have different expiries */}
       <tr className="dark-row">
         <td className="cell label">天数 (到期)</td>
@@ -132,6 +139,33 @@ export default function OptionTableRows({
         <td className="cell"><NumInput value={options[0].iv} onChange={v => upd(0,'iv',v)} step="0.5" /></td>
         <td className="cell"><NumInput value={options[1].iv} onChange={v => upd(1,'iv',v)} step="0.5" /></td>
       </tr>
+
+      {/* ── Greeks (from API) ── */}
+      {(greeks?.[0] || greeks?.[1]) && (
+        <>
+          <tr className="section-gap"><td colSpan={3}></td></tr>
+          <tr>
+            <td className="cell label">Δ Delta</td>
+            <td className="cell readonly">{greeks[0]?.delta?.toFixed(3) ?? '—'}</td>
+            <td className="cell readonly">{greeks[1]?.delta?.toFixed(3) ?? '—'}</td>
+          </tr>
+          <tr>
+            <td className="cell label">Γ Gamma</td>
+            <td className="cell readonly">{greeks[0]?.gamma?.toFixed(4) ?? '—'}</td>
+            <td className="cell readonly">{greeks[1]?.gamma?.toFixed(4) ?? '—'}</td>
+          </tr>
+          <tr>
+            <td className="cell label">Θ Theta</td>
+            <td className="cell readonly">{greeks[0]?.theta?.toFixed(3) ?? '—'}</td>
+            <td className="cell readonly">{greeks[1]?.theta?.toFixed(3) ?? '—'}</td>
+          </tr>
+          <tr>
+            <td className="cell label">V Vega</td>
+            <td className="cell readonly">{greeks[0]?.vega?.toFixed(3) ?? '—'}</td>
+            <td className="cell readonly">{greeks[1]?.vega?.toFixed(3) ?? '—'}</td>
+          </tr>
+        </>
+      )}
 
       {/* ── 拆腿 / Leg close ── */}
       <tr className="section-gap"><td colSpan={3}></td></tr>
