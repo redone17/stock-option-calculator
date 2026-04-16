@@ -1,3 +1,60 @@
+/* ── Lock screen ── */
+.lock-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.lock-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 260px;
+}
+
+.lock-title {
+  color: var(--label);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.lock-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  outline: none;
+  text-align: center;
+}
+.lock-input:focus { border-color: #666; }
+.lock-input.lock-error { border-color: #e55; }
+
+.lock-msg {
+  color: #e55;
+  font-size: 12px;
+  text-align: center;
+  margin-top: -4px;
+}
+
+.lock-btn {
+  background: #2a2a2a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lock-btn:hover:not(:disabled) { background: #333; }
+.lock-btn:disabled { opacity: 0.4; cursor: default; }
+
 /* ── Reset & base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

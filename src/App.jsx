@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import LockScreen from './components/LockScreen';
+import { isAuthenticated } from './utils/auth';
 import Header from './components/Header';
 import TabBar from './components/TabBar';
 import OptionTableRows from './components/OptionTable';
@@ -58,6 +60,7 @@ function loadState() {
 }
 
 export default function App() {
+  const [authed, setAuthed] = useState(isAuthenticated);
   const [appState, setAppState] = useState(() => {
     return loadState() ?? { pages: [newPage(1)], activeId: 1, nextId: 2 };
   });
@@ -163,6 +166,8 @@ export default function App() {
       return { pnl, pnlPct: cost > 0 ? (pnl / cost) * 100 : 0, isClosed: false };
     });
   }, [page.options, effStock, effDays, effIV]);
+
+  if (!authed) return <LockScreen onUnlock={() => setAuthed(true)} />;
 
   return (
     <div className="app">
