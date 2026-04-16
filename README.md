@@ -1,18 +1,38 @@
-[Live Page](https://redone17.github.io/stock-option-calculator/)
+# Stock Option Calculator
 
-# React + Vite
+Multi-leg option P&L calculator with real-time market data.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**[Live](https://redone17.github.io/stock-option-calculator/)**
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + Vite — UI and build
+- Black-Scholes — local options pricing engine
+- Alpaca Markets API — live stock price, IV, Greeks, HV30
+- GitHub Actions + GitHub Pages — CI/CD
 
-## React Compiler
+## Dev
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# 1. Create .env.local with your Alpaca credentials
+echo "VITE_ALPACA_KEY=your_key" >> .env.local
+echo "VITE_ALPACA_SECRET=your_secret" >> .env.local
 
-## Expanding the ESLint configuration
+# 2. Install and run
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Open `http://localhost:5173/stock-option-calculator/`. Enter a ticker, set strikes and expiry dates for each leg, click **刷新行情** to pull live price and IV.
+
+## Deploy
+
+Push to `main` — GitHub Actions builds and deploys to Pages automatically.
+
+For a new environment, add these two repository secrets before the first push:
+`Settings → Secrets and variables → Actions`
+
+| Secret | Value |
+|--------|-------|
+| `VITE_ALPACA_KEY` | Alpaca API key |
+| `VITE_ALPACA_SECRET` | Alpaca API secret |
