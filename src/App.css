@@ -422,23 +422,32 @@ body {
 .option-table thead th:hover .col-remove-btn { color: #555; }
 .col-remove-btn:hover { color: var(--text) !important; background: #333; }
 
-/* ── Add option button ── */
-.add-option-cell {
+/* ── Add option column (thead button + tbody spacer) ── */
+.add-col-th {
+  width: 32px;
+  padding: 4px !important;
   text-align: center;
-  padding: 6px !important;
 }
 .add-option-btn {
   background: none;
-  border: 1px dashed #333;
+  border: 1px solid #333;
   color: #555;
-  font-size: 12px;
-  padding: 4px 16px;
+  font-size: 14px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   cursor: pointer;
-  width: 100%;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.add-option-btn:hover { color: var(--text); border-color: #666; }
+.add-option-btn:hover { color: var(--text); border-color: #666; background: #222; }
+.add-col-td {
+  width: 32px;
+  padding: 0;
+}
 
 /* Checkbox */
 .cell.center { text-align: center; }

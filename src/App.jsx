@@ -212,13 +212,15 @@ export default function App() {
                 )}
               </th>
             ))}
+            <th className="add-col-th">
+              <button className="add-option-btn" onClick={addOption} title="添加期权">＋</button>
+            </th>
           </tr>
         </thead>
         <tbody>
           <OptionTableRows
             options={page.options}
             onOptionChange={updateOption}
-            onAddOption={addOption}
             stockPrice={page.stockPrice}
             onStockPriceChange={v => updatePage({ stockPrice: v })}
             daysToExpiry={daysToExpiry}

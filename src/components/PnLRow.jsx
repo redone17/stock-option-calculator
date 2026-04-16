@@ -27,6 +27,7 @@ export default function PnLRow({ results }) {
         {results.map((r, i) => (
           <PnLCell key={i} value={r.pnl} isClosed={r.isClosed} />
         ))}
+        <td className="add-col-td" />
       </tr>
       {n > 1 && (
         <tr className="pnl-row">
@@ -34,6 +35,7 @@ export default function PnLRow({ results }) {
           <td className={`cell pnl-cell combined ${combined >= 0 ? 'gain' : 'loss'}`} colSpan={n}>
             $ {fmt(combined)}
           </td>
+          <td className="add-col-td" />
         </tr>
       )}
       <tr className="pnl-row">
@@ -41,6 +43,7 @@ export default function PnLRow({ results }) {
         {results.map((r, i) => (
           <PnLCell key={i} value={r.pnlPct} isPercent isClosed={r.isClosed} />
         ))}
+        <td className="add-col-td" />
       </tr>
     </>
   );

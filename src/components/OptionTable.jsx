@@ -39,8 +39,11 @@ const dirOpts = [
   { value: 'sell', label: '卖出 (Sell)' },
 ];
 
+// Empty cell that occupies the "add" column — keeps column count consistent
+const AddCol = () => <td className="add-col-td" />;
+
 export default function OptionTableRows({
-  options, onOptionChange, onAddOption,
+  options, onOptionChange,
   stockPrice, onStockPriceChange,
   daysToExpiry, remainingDays,
   closeDate, onCloseDateChange,
@@ -53,6 +56,8 @@ export default function OptionTableRows({
   }
 
   const n = options.length;
+  // colSpan covering all option columns + the add column
+  const fullSpan = n + 1;
 
   return (
     <>
@@ -64,6 +69,7 @@ export default function OptionTableRows({
             <Select value={opt.type} onChange={v => upd(i, 'type', v)} options={typeOpts} />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">买入方向</td>
@@ -72,6 +78,7 @@ export default function OptionTableRows({
             <Select value={opt.direction} onChange={v => upd(i, 'direction', v)} options={dirOpts} />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">买入价 Premium</td>
@@ -80,6 +87,7 @@ export default function OptionTableRows({
             <NumInput value={opt.premium} onChange={v => upd(i, 'premium', v)} />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">行权价</td>
@@ -88,6 +96,7 @@ export default function OptionTableRows({
             <NumInput value={opt.strike} onChange={v => upd(i, 'strike', v)} step="1" />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">买入日期</td>
@@ -96,6 +105,7 @@ export default function OptionTableRows({
             <DateInput value={opt.buyDate} onChange={v => upd(i, 'buyDate', v)} />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">到期日</td>
@@ -104,6 +114,7 @@ export default function OptionTableRows({
             <DateInput value={opt.expiry} onChange={v => upd(i, 'expiry', v)} />
           </td>
         ))}
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">合约数量</td>
@@ -112,20 +123,23 @@ export default function OptionTableRows({
             <NumInput value={opt.contracts} onChange={v => upd(i, 'contracts', v)} step="1" min="1" />
           </td>
         ))}
+        <AddCol />
       </tr>
 
       {/* ── Market data ── */}
-      <tr className="section-gap"><td colSpan={n + 1}></td></tr>
+      <tr className="section-gap"><td colSpan={fullSpan + 1} /></tr>
       <tr className="dark-row">
         <td className="cell label">股票价格</td>
         <td className="cell" colSpan={n}>
           <NumInput value={stockPrice} onChange={onStockPriceChange} step="0.01" />
         </td>
+        <AddCol />
       </tr>
       {hv != null && (
         <tr className="dark-row">
           <td className="cell label">历史波动率 HV30</td>
           <td className="cell readonly" colSpan={n}>{hv.toFixed(1)}%</td>
+          <AddCol />
         </tr>
       )}
       <tr className="dark-row">
@@ -133,31 +147,36 @@ export default function OptionTableRows({
         {daysToExpiry.map((d, i) => (
           <td key={i} className="cell readonly">{d}</td>
         ))}
+        <AddCol />
       </tr>
       <tr className="dark-row">
         <td className="cell label">剩余天数</td>
         {remainingDays.map((d, i) => (
           <td key={i} className="cell readonly">{d}</td>
         ))}
+        <AddCol />
       </tr>
       <tr className="dark-row">
         <td className="cell label">预计平仓日期</td>
         <td className="cell" colSpan={n}>
           <DateInput value={closeDate} onChange={onCloseDateChange} />
         </td>
+        <AddCol />
       </tr>
 
       {/* ── Holding ── */}
-      <tr className="section-gap"><td colSpan={n + 1}></td></tr>
+      <tr className="section-gap"><td colSpan={fullSpan + 1} /></tr>
       <tr>
         <td className="cell label">持有天数</td>
         <td className="cell readonly" colSpan={n}>{daysHeld}</td>
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">预期平仓股价</td>
         <td className="cell" colSpan={n}>
           <NumInput value={closePrice} onChange={onClosePriceChange} step="0.01" />
         </td>
+        <AddCol />
       </tr>
       <tr>
         <td className="cell label">IV (%)</td>
@@ -166,12 +185,13 @@ export default function OptionTableRows({
             <NumInput value={opt.iv} onChange={v => upd(i, 'iv', v)} step="0.5" />
           </td>
         ))}
+        <AddCol />
       </tr>
 
       {/* ── Greeks (from API) ── */}
       {greeks?.some(g => g != null) && (
         <>
-          <tr className="section-gap"><td colSpan={n + 1}></td></tr>
+          <tr className="section-gap"><td colSpan={fullSpan + 1} /></tr>
           {[
             { label: 'Δ Delta', key: 'delta', fmt: v => v.toFixed(3) },
             { label: 'Γ Gamma', key: 'gamma', fmt: v => v.toFixed(4) },
@@ -185,13 +205,14 @@ export default function OptionTableRows({
                   {greeks[i]?.[key] != null ? fmt(greeks[i][key]) : '—'}
                 </td>
               ))}
+              <AddCol />
             </tr>
           ))}
         </>
       )}
 
       {/* ── 拆腿 / Leg close ── */}
-      <tr className="section-gap"><td colSpan={n + 1}></td></tr>
+      <tr className="section-gap"><td colSpan={fullSpan + 1} /></tr>
       <tr>
         <td className="cell label">已平仓</td>
         {options.map((opt, i) => (
@@ -204,6 +225,7 @@ export default function OptionTableRows({
             />
           </td>
         ))}
+        <AddCol />
       </tr>
       {options.some(opt => opt.isClosed) && (
         <tr>
@@ -215,16 +237,9 @@ export default function OptionTableRows({
                 : <span className="cell readonly">—</span>}
             </td>
           ))}
+          <AddCol />
         </tr>
       )}
-
-      {/* ── Add option ── */}
-      <tr className="section-gap"><td colSpan={n + 1}></td></tr>
-      <tr>
-        <td colSpan={n + 1} className="cell add-option-cell">
-          <button className="add-option-btn" onClick={onAddOption}>＋ 添加期权</button>
-        </td>
-      </tr>
     </>
   );
 }
