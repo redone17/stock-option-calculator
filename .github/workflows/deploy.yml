@@ -25,6 +25,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_ALPACA_KEY: ${{ secrets.VITE_ALPACA_KEY }}
+          VITE_ALPACA_SECRET: ${{ secrets.VITE_ALPACA_SECRET }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
